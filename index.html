@@ -131,6 +131,13 @@ const maxAttempts = 6;
 let secretWord = words[level];
 let decisionMode = false;
 
+const pleaseMessages = [
+    "Please ? 🥹",
+    "Pretty Please? 😭",
+    "Pleeeeeeeaaaaaaaasssssssseeeeeeee",
+    "Pleaaseeeee say yes naaa"
+];
+
 const game = document.getElementById("game");
 const levelText = document.getElementById("levelText");
 
@@ -148,9 +155,11 @@ createBoard();
 let currentGuess = [];
 
 function addLetter(letter) {
-    if (currentGuess.length < 5) {
+    const limit = decisionMode ? 3 : 5;
+
+    if (currentGuess.length < limit) {
         const tiles = document.querySelectorAll(".tile");
-        const index = attempts * 5 + currentGuess.length;
+        const index = attempts * limit + currentGuess.length;
 
         tiles[index].textContent = letter;
         currentGuess.push(letter);
@@ -159,8 +168,9 @@ function addLetter(letter) {
 
 function removeLetter() {
     if (currentGuess.length > 0) {
+        const limit = decisionMode ? 3 : 5;
         const tiles = document.querySelectorAll(".tile");
-        const index = attempts * 5 + currentGuess.length - 1;
+        const index = attempts * limit + currentGuess.length - 1;
 
         tiles[index].textContent = "";
         currentGuess.pop();
@@ -171,7 +181,8 @@ function submitGuess() {
 
     let guess = currentGuess.join("");
 
-    if (guess.length !== 5) {
+    const limit = decisionMode ? 3 : 5;
+    if (guess.length !== limit) {
         alert("Enter a 5-letter word");
         return;
     }
@@ -282,10 +293,14 @@ function createKeyboard() {
 createKeyboard();
 
 const giveUpBtn = document.getElementById("giveUpBtn");
+giveUpBtn.onclick = revealProposal;
 
 function revealProposal() {
-    const rows = ["WILL", "YOU", "BE", "MY", "VALENTINE"];
+    const rows = ["WILL", "YOU", "BE", "MY", "VALENTINES?"];
     const tiles = document.querySelectorAll(".tile");
+
+    game.style.gridTemplateColumns = "repeat(10, 60px)";
+
 
     let tileIndex = 0;
     let delay = 0;
@@ -307,14 +322,28 @@ function revealProposal() {
                 tileIndex++;
             }
         }
-
-        // move to next row
-        const remainder = tileIndex % 5;
-        if (remainder !== 0) {
-            tileIndex += (5 - remainder);
-        }
     });
-    giveUpBtn.onclick = revealProposal;
+
+    giveUpBtn.style.display = "none";
+
+    setTimeout(startDecisionRound, delay + 1000);
+}
+
+function startDecisionRound() {
+    decisionMode = true;
+    attempts = 0;
+    currentGuess = [];
+
+    levelText.textContent = "Type YES or NO";
+
+    game.style.gridTemplateColumns = "repeat(3, 60px)";
+    game.innerHTML = "";
+
+    for (let i = 0; i < maxAttempts * 3; i++) {
+        const tile = document.createElement("div");
+        tile.classList.add("tile");
+        game.appendChild(tile);
+    }
 }
 
 </script>
