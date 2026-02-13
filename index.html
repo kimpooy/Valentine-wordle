@@ -20,7 +20,6 @@ h1 { margin-top: 20px; }
 
 #game {
     display: grid;
-    grid-template-columns: repeat(5, 60px);
     gap: 10px;
     justify-content: center;
     margin-top: 20px;
@@ -73,10 +72,6 @@ button {
     background: #555;
 }
 
-.key.correct { background: #6aaa64 }
-.key.present { background: #c9b458 }
-.key.absent { background: #ca0c0c }
-
 @keyframes flip {
     0% { transform: rotateX(0deg); }
     50% { transform: rotateX(90deg); }
@@ -97,12 +92,12 @@ button {
 <div id="keyboard"></div>
 <br>
 <button id="giveUpBtn" style="display:none;">Give Up</button>
+<button id="answerBtn" style="display:none;">Answer</button>
 
 <script>
-const words = ["SMILE"];
+const secretWord = "SMILE";
 let attempts = 0;
 const maxAttempts = 6;
-let secretWord = words[0];
 let decisionMode = false;
 
 const pleaseMessages = [
@@ -116,6 +111,7 @@ const pleaseMessages = [
 const game = document.getElementById("game");
 const levelText = document.getElementById("levelText");
 const giveUpBtn = document.getElementById("giveUpBtn");
+const answerBtn = document.getElementById("answerBtn");
 
 function createBoard() {
     game.style.gridTemplateColumns = "repeat(5, 60px)";
@@ -136,8 +132,10 @@ function addLetter(letter) {
     if (currentGuess.length < limit) {
         const tiles = document.querySelectorAll(".tile");
         const index = attempts * limit + currentGuess.length;
-        tiles[index].textContent = letter;
-        currentGuess.push(letter);
+        if (tiles[index]) {
+            tiles[index].textContent = letter;
+            currentGuess.push(letter);
+        }
     }
 }
 
@@ -146,7 +144,9 @@ function removeLetter() {
         const limit = decisionMode ? 3 : 5;
         const tiles = document.querySelectorAll(".tile");
         const index = attempts * limit + currentGuess.length - 1;
-        tiles[index].textContent = "";
+        if (tiles[index]) {
+            tiles[index].textContent = "";
+        }
         currentGuess.pop();
     }
 }
@@ -155,43 +155,7 @@ function submitGuess() {
     let guess = currentGuess.join("");
     const limit = decisionMode ? 3 : 5;
 
-    if (guess.length !== limit) {
-        return;
-    }
-
-    const tiles = document.querySelectorAll(".tile");
-    let start = attempts * limit;
-
-    for (let i = 0; i < limit; i++) {
-        const tile = tiles[start + i];
-        const letter = guess[i];
-        const key = document.getElementById("key-" + letter);
-
-        tile.textContent = letter;
-        setTimeout(() => {
-            tile.classList.add("flip");
-        }, i * 100);
-
-        if (!decisionMode) {
-            if (letter === secretWord[i]) {
-                tile.classList.add("correct");
-                if (key) key.classList.add("correct");
-            } else if (secretWord.includes(letter)) {
-                tile.classList.add("present");
-                if (key && !key.classList.contains("correct")) {
-                    key.classList.add("present");
-                }
-            } else {
-                tile.classList.add("absent");
-                if (key && !key.classList.contains("correct") && !key.classList.contains("present")) {
-                    key.classList.add("absent");
-                }
-            }
-        }
-    }
-
-    attempts++;
-    currentGuess = [];
+    if (guess.length !== limit) return;
 
     if (decisionMode) {
         if (guess === "YES") {
@@ -209,6 +173,28 @@ function submitGuess() {
         }
     }
 
+    const tiles = document.querySelectorAll(".tile");
+    let start = attempts * 5;
+
+    for (let i = 0; i < 5; i++) {
+        const tile = tiles[start + i];
+        const letter = guess[i];
+
+        tile.textContent = letter;
+        setTimeout(() => tile.classList.add("flip"), i * 100);
+
+        if (letter === secretWord[i]) {
+            tile.classList.add("correct");
+        } else if (secretWord.includes(letter)) {
+            tile.classList.add("present");
+        } else {
+            tile.classList.add("absent");
+        }
+    }
+
+    attempts++;
+    currentGuess = [];
+
     if (guess === secretWord) {
         revealProposal();
     } else if (attempts >= maxAttempts) {
@@ -218,11 +204,7 @@ function submitGuess() {
 
 function createKeyboard() {
     const keyboard = document.getElementById("keyboard");
-    const rows = [
-        "QWERTYUIOP",
-        "ASDFGHJKL",
-        "ZXCVBNM"
-    ];
+    const rows = ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"];
 
     rows.forEach(row => {
         const rowDiv = document.createElement("div");
@@ -230,7 +212,6 @@ function createKeyboard() {
             const key = document.createElement("div");
             key.textContent = letter;
             key.classList.add("key");
-            key.id = "key-" + letter;
             key.onclick = () => addLetter(letter);
             rowDiv.appendChild(key);
         }
@@ -253,23 +234,31 @@ function createKeyboard() {
 createKeyboard();
 
 giveUpBtn.onclick = revealProposal;
+answerBtn.onclick = startDecisionRound;
 
 function revealProposal() {
     const message = ["WILL", "YOU", "BE", "MY", "VALENTINES"];
 
-    game.style.gridTemplateColumns = "repeat(10, 60px)";
     game.innerHTML = "";
+    game.style.gridTemplateColumns = "repeat(10, 60px)";
 
     message.forEach(word => {
+        const row = document.createElement("div");
+        row.style.display = "grid";
+        row.style.gridTemplateColumns = `repeat(${word.length}, 60px)`;
+        row.style.gap = "10px";
+        row.style.justifyContent = "center";
+
         for (let i = 0; i < word.length; i++) {
             const tile = document.createElement("div");
             tile.classList.add("tile");
-            game.appendChild(tile);
+            row.appendChild(tile);
         }
+
+        game.appendChild(row);
     });
 
     const tiles = document.querySelectorAll(".tile");
-
     let tileIndex = 0;
     let delay = 0;
 
@@ -282,13 +271,15 @@ function revealProposal() {
                 tile.style.background = "#ff4d6d";
                 tile.style.color = "white";
             }, delay);
-            delay += 100;
+            delay += 250;
             tileIndex++;
         }
     });
 
     giveUpBtn.style.display = "none";
-    setTimeout(startDecisionRound, delay + 1000);
+    setTimeout(() => {
+        answerBtn.style.display = "inline-block";
+    }, delay + 800);
 }
 
 function startDecisionRound() {
@@ -297,11 +288,12 @@ function startDecisionRound() {
     currentGuess = [];
 
     levelText.textContent = "Type YES or NO";
+    answerBtn.style.display = "none";
 
-    game.style.gridTemplateColumns = "repeat(3, 60px)";
     game.innerHTML = "";
+    game.style.gridTemplateColumns = "repeat(3, 60px)";
 
-    for (let i = 0; i < maxAttempts * 3; i++) {
+    for (let i = 0; i < 3; i++) {
         const tile = document.createElement("div");
         tile.classList.add("tile");
         game.appendChild(tile);
