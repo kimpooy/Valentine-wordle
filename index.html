@@ -89,6 +89,21 @@ button {
 
 .yes-btn { background: #28a745; }
 .no-btn { background: #dc3545; position: relative; }
+
+.key.correct { background: #6aaa64}
+.key.present { background: #c9b458}
+.key.absent { background: #ca0c0c}
+
+@keyframes flip {
+    0% { transform: rotateX(0deg); }
+    50% { transform: rotateX(90deg); }
+    100% { transform: rotateX(0deg); }
+}
+
+.flip {
+    animation: flip 0.4s ease;
+}
+
 </style>
 </head>
 <body>
@@ -97,9 +112,9 @@ button {
 <div id="levelText">Level 1</div>
 
 <div id="game"></div>
-
-<input id="inputBox" maxlength="5" placeholder="Type Word" />
 <div id="keyboard"></div>
+<br>
+<button id="giveUpBtn" style="display:none;">Give Up</button>
 
 <div id="proposal">
     <h2>You unlocked my heart…</h2>
@@ -129,9 +144,31 @@ function createBoard() {
 
 createBoard();
 
+let currentGuess = [];
+
+function addLetter(letter) {
+    if (currentGuess.length < 5) {
+        const tiles = document.querySelectorAll(".tile");
+        const index = attempts * 5 + currentGuess.length;
+
+        tiles[index].textContent = letter;
+        currentGuess.push(letter);
+    }
+}
+
+function removeLetter() {
+    if (currentGuess.length > 0) {
+        const tiles = document.querySelectorAll(".tile");
+        const index = attempts * 5 + currentGuess.length - 1;
+
+        tiles[index].textContent = "";
+        currentGuess.pop();
+    }
+}
+
 function submitGuess() {
-    const input = document.getElementById("inputBox");
-    let guess = input.value.toUpperCase();
+
+    let guess = currentGuess.join("");
 
     if (guess.length !== 5) {
         alert("Enter a 5-letter word");
@@ -143,19 +180,30 @@ function submitGuess() {
 
     for (let i = 0; i < 5; i++) {
         const tile = tiles[start + i];
-        tile.textContent = guess[i];
+        const letter = guess[i];
+        const key = document.getElementById("key-" + letter);
+
+        tile.textContent = letter;
+        tile.classList.add("flip");
 
         if (guess[i] === secretWord[i]) {
             tile.classList.add("correct");
-        } else if (secretWord.includes(guess[i])) {
+            if (key) key.classList.add("correct");
+        } else if (secretWord.includes(letter)) {
             tile.classList.add("present");
+            if (key && !key.classList.contains("correct")) {
+                key.classList.add("present");
+            }
         } else {
             tile.classList.add("absent");
+            if (key && !key.classList.contains("correct") && !key.classList.contains("present")) {
+                key.classList.add("absent");
+            }
         }
     }
 
     attempts++;
-    input.value = "";
+    currentGuess = [];
 
     if (guess === secretWord) {
         level++;
@@ -170,9 +218,7 @@ function submitGuess() {
             document.getElementById("proposal").style.display = "block";
         }
     } else if (attempts >= maxAttempts) {
-        alert("Try again!");
-        attempts = 0;
-        createBoard();
+        document.getElementById("giveUpBtn").style.display = "inline-block";
     }
 }
 
@@ -188,28 +234,86 @@ function yesClicked() {
         "<h1 style='margin-top:100px;'>YAY! 💖 Happy Valentine’s!</h1>";
 }
 
-const inputBox = document.getElementById("inputBox");
 const keyboard = document.getElementById("keyboard");
 
 function createKeyboard() {
-    const letters = "QWERTYUIOPASDFGHJKLZXCVBNM";
+    const rows = [
+        "QWERTYUIOP",
+        "ASDFGHJKL",
+        "ZXCVBNM"
+    ];
 
-    for (let letter of letters) {
-        const key = document.createElement("div");
-        key.textContent = letter;
-        key.classList.add("key");
+    rows.forEach(row => {
+        const rowDiv = document.createElement("div");
 
-        key.onclick = () => {
-            if (inputBox.value.length < 5) {
-                inputBox.value += letter;
-            }
-        };
+        for (let letter of row) {
+            const key = document.createElement("div");
+            key.textContent = letter;
+            key.classList.add("key");
+            key.id = "key-" + letter;
 
-        keyboard.appendChild(key);
-    }
+            key.onclick = () => addLetter(letter);
 
-    createKeyboard();
+
+            rowDiv.appendChild(key);
+        }
+
+        keyboard.appendChild(rowDiv);
+    });
+
+    // Enter key
+    const enter = document.createElement("div");
+    enter.textContent = "Enter";
+    enter.classList.add("key");
+    enter.onclick = submitGuess;
+    keyboard.appendChild(enter);
+
+    // Backspace key
+    const backspace = document.createElement("div");
+    backspace.textContent = "⌫";
+    backspace.classList.add("key");
+    backspace.onclick = removeLetter;
+    keyboard.appendChild(backspace);
 }
+
+createKeyboard();
+
+const giveUpBtn = document.getElementById("giveUpBtn");
+giveUpBtn.onclick = revealProposal;
+
+function revealProposal() {
+    const rows = ["WILL", "YOU", "BE", "MY", "VALENTINE"];
+    const tiles = document.querySelectorAll(".tile");
+
+    let tileIndex = 0;
+    let delay = 0;
+
+    rows.forEach(word => {
+        for (let i = 0; i < word.length; i++) {
+            if (tileIndex < tiles.length) {
+                const tile = tiles[tileIndex];
+
+                setTimeout(() => {
+                    tile.classList.add("flip");
+                    tile.textContent = word[i];
+                    tile.classList.remove("correct", "present", "absent");
+                    tile.style.background = "#ff4d6d";
+                    tile.style.color = "white";
+                }, delay);
+
+                delay += 100;
+                tileIndex++;
+            }
+        }
+
+        // move to next row
+        const remainder = tileIndex % 5;
+        if (remainder !== 0) {
+            tileIndex += (5 - remainder);
+        }
+    });
+}
+
 </script>
 
 </body>
