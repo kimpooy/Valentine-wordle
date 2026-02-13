@@ -129,6 +129,7 @@ let level = 0;
 let attempts = 0;
 const maxAttempts = 6;
 let secretWord = words[level];
+let decisionMode = false;
 
 const game = document.getElementById("game");
 const levelText = document.getElementById("levelText");
@@ -184,9 +185,11 @@ function submitGuess() {
         const key = document.getElementById("key-" + letter);
 
         tile.textContent = letter;
-        tile.classList.add("flip");
+        setTimeout(() => {
+            tile.classList.add("flip");
+        }, i * 100);
 
-        if (guess[i] === secretWord[i]) {
+        if (letter === secretWord[i]) {
             tile.classList.add("correct");
             if (key) key.classList.add("correct");
         } else if (secretWord.includes(letter)) {
@@ -279,7 +282,6 @@ function createKeyboard() {
 createKeyboard();
 
 const giveUpBtn = document.getElementById("giveUpBtn");
-giveUpBtn.onclick = revealProposal;
 
 function revealProposal() {
     const rows = ["WILL", "YOU", "BE", "MY", "VALENTINE"];
@@ -312,6 +314,7 @@ function revealProposal() {
             tileIndex += (5 - remainder);
         }
     });
+    giveUpBtn.onclick = revealProposal;
 }
 
 </script>
