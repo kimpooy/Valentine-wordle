@@ -228,11 +228,12 @@ button:focus-visible {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     min-height: 100vh;
-    padding: 24px;
+    padding: 32px 24px 24px;
     position: relative;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 .valentine::before {
     content: "";
