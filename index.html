@@ -251,11 +251,11 @@ button:focus-visible {
 .valentine > * {
     position: relative;
 }
-/* Hide WORDLE/level on proposal so WILL row is at top; keep scrollable */
-.valentine h1:first-of-type,
-.valentine #levelText,
-.valentine #message,
-.valentine #keyboard {
+/* Hide WORDLE/level/keyboard only on proposal message (WILL YOU...); show them again on Type YES */
+.valentine.proposal-message h1:first-of-type,
+.valentine.proposal-message #levelText,
+.valentine.proposal-message #message,
+.valentine.proposal-message #keyboard {
     display: none !important;
 }
 .valentine #game {
@@ -780,6 +780,7 @@ function transitionTo(callback) {
 function revealProposal() {
     transitionTo(() => {
         document.body.classList.add("valentine");
+        document.body.classList.add("proposal-message");
 
         const message = ["WILL", "YOU", "BE", "MY", "VALENTINES"];
         game.innerHTML = "";
@@ -822,6 +823,8 @@ function revealProposal() {
 }
 
 function startDecisionRound() {
+    document.body.classList.remove("proposal-message");
+    document.getElementById("keyboard").style.display = "";
     decisionMode = true;
     attempts = 0;
     currentGuess = [];
