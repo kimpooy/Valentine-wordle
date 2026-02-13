@@ -797,6 +797,9 @@ function revealProposal() {
 
         giveUpBtn.style.display = "none";
         answerBtn.style.display = "inline-block";
+
+        // Make sure the first row (WILL) is visible on all screens
+        window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
     });
 }
 
